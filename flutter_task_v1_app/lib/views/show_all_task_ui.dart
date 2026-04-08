@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_task_v1_app/models/task.dart';
+import 'package:flutter_task_v1_app/services/supabase_service.dart';
 import 'package:flutter_task_v1_app/views/add_task_ui.dart';
+import 'package:flutter_task_v1_app/views/update_delete_task.dart';
 
 class ShowAllTaskUi extends StatefulWidget {
   const ShowAllTaskUi({super.key});
@@ -9,34 +12,136 @@ class ShowAllTaskUi extends StatefulWidget {
 }
 
 class _ShowAllTaskUiState extends State<ShowAllTaskUi> {
+  // สร้าง instance/ตัวแทน/object ของ SupabaseService
+  final service = SupabaseService();
+
+  // สร้างตัวแปรเพื่อเก็บข้อมูลที่ได้จากการดึงข้อมูลจาก Supabase
+  List<Task> tasks = [];
+
+  // สร้างเมธอดเพื่อเรียกใช้งาน service ดึงข้อมูลมาเก็บในตัวแปร
+  void loadTasks() async {
+    final data = await service.getTasks();
+    setState(() {
+      tasks = data;
+    });
+  }
+
+  @override
+  initState() {
+    super.initState();
+    // เรียกใช้งานเมธอดเพื่อดึงข้อมูล ตอนหน้าจอถูกเปิดขึ้นมา
+    loadTasks();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        backgroundColor: const Color.fromARGB(255, 255, 209, 41),
-        title: Text(
-          'Task Krub V1',
-          style: TextStyle(
+        // ส่วนของ Appbar
+        appBar: AppBar(
+          backgroundColor: const Color.fromARGB(255, 255, 209, 41),
+          title: Text(
+            'Task Krub V1',
+            style: TextStyle(
+              color: Colors.white,
+            ),
+          ),
+          centerTitle: true,
+        ),
+        // ส่วนของปุ่มเปิดไปหน้าเพิ่ม task
+        floatingActionButton: FloatingActionButton(
+          backgroundColor: const Color.fromARGB(255, 255, 209, 41),
+          onPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => AddTaskUi(),
+              ),
+            );
+          },
+          child: Icon(
+            Icons.add,
             color: Colors.white,
           ),
         ),
-        centerTitle: true,
-      ),
-      floatingActionButton: FloatingActionButton(
-        backgroundColor: const Color.fromARGB(255, 255, 209, 41),
-        onPressed: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => AddTaskUi(),
-            ),);
-        },
-        child: Icon(
-          Icons.add,
-          color: Colors.white,
-        ),
-      ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
-    );
+        //ส่วนของตำแหน่งของปุ่มเปิดไปหน้าเพิ่ม task
+        floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
+        //ส่วนของ body ที่แสดงโลโก้และข้อมูลที่ดึงจาก supabase
+        body:Column(
+            children: [
+              // แสดง logo
+              SizedBox(height: 40),
+              Image.asset(
+                'assets/images/to-do-list.png',
+                width: 150,
+                height: 150,
+                fit: BoxFit.cover,
+              ),
+              SizedBox(height: 20),
+              // ส่วนของ ListView ที่แสดงข้อมูลที่ดึงจาก Supabase
+              Expanded(
+                child: ListView.builder(
+                    // จำนวนรายการ
+                    itemCount: tasks.length,
+                    // หน้าตาของแต่ละรายการ
+                    itemBuilder: (context, index) {
+                      return Padding(
+                        padding: const EdgeInsets.only(
+                          top: 10,
+                          bottom: 10,
+                          left: 35,
+                          right: 35,
+                        ),
+                        child: ListTile(
+                          onTap: () {
+                            //เปิดไปหน้า update delete task
+                            //และจะมีการส่งข้อมูลของ task ที่ถูกกดไปด้วย
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => UpdateDeleteTask(
+                                  task: tasks[index],
+                                ),
+                              ),
+                            ).then((value) {
+                              // เมื่อกลับมาจากหน้า update delete task ให้ทำการโหลดข้อมูลใหม่
+                              loadTasks();
+                            });
+                          },
+                          leading: (tasks[index].task_image_url != null &&
+                                  tasks[index].task_image_url != "")
+                              ? Image.network(
+                                  tasks[index].task_image_url!,
+                                  width: 50,
+                                  height: 50,
+                                  fit: BoxFit.cover,
+                                )
+                              : Image.asset(
+                                  'assets/images/work-order.png',
+                                  width: 50,
+                                  height: 50,
+                                  fit: BoxFit.cover,
+                                ),
+                          title: Text(
+                            'งาน: ${tasks[index].task_name}',
+                          ),
+                          subtitle: Text(
+                            'สถานะ: ${tasks[index].task_status == true ? 'เสร็จ' : 'ยังไม่เสร็จ'}',
+                          ),
+                          trailing: Icon(
+                            Icons.info,
+                            color: Colors.red,
+                          ),
+                          tileColor: index % 2 == 0 ? const Color.fromARGB(255, 255, 209, 41) : const Color.fromARGB(255, 144, 238, 144),
+                          contentPadding: EdgeInsets.all(10),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(15),
+                          ),
+                        ),
+                      );
+                    }),
+              ),
+            ],
+          ),
+        );
   }
 }

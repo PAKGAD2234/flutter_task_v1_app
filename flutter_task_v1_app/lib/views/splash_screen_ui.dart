@@ -34,13 +34,13 @@ class _SplashScreenUiState extends State<SplashScreenUi> {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Image.asset(
-                  'assets/images/logo.png',
+                  'assets/images/work-order.png',
                   width: 200,
                   height: 200,
                 ),
                 SizedBox(height: 20),
                 Text(
-                  'Task Krub V1',
+                  'Task Na Ka',
                   style: TextStyle(
                     color: Colors.white,
                     fontSize: 30,
